@@ -479,18 +479,32 @@
                     </div>
                 </div>
 
-                <div id="video-step">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4">Security Awareness Video</h3>
-                    <p class="text-gray-600 mb-4">Watch this brief video to learn about identifying and avoiding phishing attempts in the workplace.</p>
-                    
-                    <div class="aspect-ratio-box rounded-lg overflow-hidden shadow-md">
-                        <iframe id="training-video" src="https://www.youtube.com/embed/oTf2-7_45xI?rel=0&amp;controls=1&amp;showinfo=0" frameborder="0" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                    </div>
-                    
-                    <button onclick="nextStep('quiz')" class="btn-primary w-full mt-4">
-                        <i class="fas fa-play-circle mr-2"></i> Continue to Quiz
-                    </button>
-                </div>
+                <div id="video-step" class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+  <h3 class="text-2xl font-bold text-gray-800 mb-3">Security Awareness Video</h3>
+  <p class="text-gray-600 mb-5">
+    Watch this brief video to learn how to identify and avoid phishing attempts in the workplace.
+  </p>
+
+  <!-- Responsive video container -->
+  <div class="aspect-video rounded-lg overflow-hidden shadow-md">
+    <iframe
+      id="training-video"
+      src="https://www.youtube.com/embed/JlQovysQBn0?rel=0&controls=1&showinfo=0"
+      title="Phishing Awareness Training Video"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+  </div>
+
+  <!-- Continue button -->
+  <button
+    onclick="nextStep('quiz')"
+    class="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center transition-all duration-200">
+    <i class="fas fa-play-circle mr-2 text-lg"></i>
+    Continue to Quiz
+  </button>
+</div>
 
                 <div id="quiz-step" class="hidden">
                     <h3 class="text-xl font-bold text-gray-800 mb-4">Security Knowledge Assessment</h3>
@@ -734,3 +748,4 @@
     </script>
 </body>
 </html>
+
