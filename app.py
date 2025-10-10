@@ -626,8 +626,11 @@ def logout():
     session.pop('logged_in', None)
     return redirect(url_for('home'))
 
-
 if __name__ == '__main__':
-    if not os.path.exists('templates'):
-        os.makedirs('templates')
-    app.run(debug=True)
+    # Use an environment provided PORT (Render / Heroku / many PaaS)
+    port = int(os.environ.get('PORT', 5000))
+    # Do NOT use debug=True in production; set debug via environment if needed
+    debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
+
+
