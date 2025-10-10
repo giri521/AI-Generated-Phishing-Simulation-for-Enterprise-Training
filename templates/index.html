@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Update Required | Corporate Security Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #1e40af;
+            --primary-light: #3b82f6;
+            --primary-dark: #1e3a8a;
+            --secondary-blue: #dbeafe;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-amber: #f59e0b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        html { 
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+        }
+
+        body {
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+
+        .corporate-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+        }
+
+        .corporate-header {
+            background: linear-gradient(90deg, var(--primary-blue) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+        }
+
+        .corporate-body {
+            padding: 2rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-secondary:hover {
+            background: #0da271;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary-blue);
+            border: 1px solid var(--primary-blue);
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-outline:hover {
+            background: var(--secondary-blue);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+        }
+
+        .alert-banner {
+            background: #fef3cd;
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .alert-banner i {
+            color: #d97706;
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+        }
+
+        .alert-banner p {
+            margin: 0;
+            color: #92400e;
+            font-weight: 500;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gray-200);
+            z-index: 1;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid var(--gray-300);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-circle {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+            color: white;
+        }
+
+        .step.completed .step-circle {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--gray-600);
+        }
+
+        .step.active .step-label {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        .quiz-question {
+            background: var(--gray-50);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quiz-option:hover {
+            background: var(--gray-100);
+        }
+
+        .quiz-option.selected {
+            background: var(--secondary-blue);
+            border: 1px solid var(--primary-light);
+        }
+
+        .quiz-option input {
+            margin-right: 0.75rem;
+        }
+
+        .result-card {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 12px;
+            background: var(--gray-50);
+        }
+
+        .score-display {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin: 1rem 0;
+        }
+
+        .aspect-ratio-box { 
+            position: relative; 
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 ratio */
+        }
+        .aspect-ratio-box > iframe {
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            border-radius: 8px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .justify-center {
+            justify-content: center;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .space-y-4 > * + * {
+            margin-top: 1rem;
+        }
+
+        .space-y-6 > * + * {
+            margin-top: 1.5rem;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
+        }
+
+        .mt-6 {
+            margin-top: 1.5rem;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .p-4 {
+            padding: 1rem;
+        }
+
+        .p-6 {
+            padding: 1.5rem;
+        }
+
+        .rounded-lg {
+            border-radius: 8px;
+        }
+
+        .shadow-sm {
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-3xl corporate-card">
+        
+        <!-- Corporate Header -->
+        <div class="corporate-header">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-shield-alt text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold">Corporate Security Portal</h1>
+                        <p class="text-sm opacity-90">Ensuring a secure working environment</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs opacity-80">Internal Use Only</p>
+                    <p class="text-sm font-medium">v2.4.1</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="corporate-body">
+            
+            <!-- === 1. PHISHING FORM VIEW (initial_state='form') === -->
+            <div id="phishing-form-view" class="{{ 'block' if initial_state == 'form' else 'hidden' }}">
+                <div class="alert-banner">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Your session has expired. Please re-authenticate to continue accessing corporate resources.</p>
+                </div>
+
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Account Verification Required</h2>
+                    <p class="mt-2 text-gray-600">For security purposes, please confirm your identity</p>
+                </div>
+                
+                <form class="space-y-6" action="{{ url_for('phishing_attempt') }}" method="POST">
+                    <input type="hidden" name="campaign_id" value="{{ campaign_id }}">
+                    
+                    <div>
+                        <label for="display-email" class="form-label">Corporate Email</label>
+                        <input id="display-email" name="email" type="email" autocomplete="email" required
+                               class="form-control"
+                               placeholder="name@company.com">
+                    </div>
+                    
+                    <div>
+                        <label for="display-password" class="form-label">Password</label>
+                        <input id="display-password" name="password" type="password" autocomplete="current-password" required
+                               class="form-control"
+                               placeholder="Enter your password">
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="remember-me" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <label for="remember-me" class="ml-2 text-sm text-gray-600">Remember this device</label>
+                        </div>
+                        <a href="#" class="text-sm text-blue-600 hover:text-blue-800">Forgot password?</a>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="btn-primary w-full">
+                            <i class="fas fa-lock mr-2"></i> Verify Identity
+                        </button>
+                    </div>
+                    
+                    <div class="text-center pt-4 border-t border-gray-200">
+                        <a href="{{ url_for('home') }}" class="text-sm text-gray-500 hover:text-blue-800 font-medium">
+                            <i class="fas fa-cog mr-1"></i> Administrator Access
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- === 2. TRAINING & QUIZ VIEWS (initial_state='training') === -->
+            <div id="training-view" class="{{ 'block' if initial_state == 'training' else 'hidden' }} space-y-6">
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-gray-800">Security Awareness Training</h2>
+                    <p class="mt-2 text-gray-600">Mandatory compliance training module</p>
+                </div>
+                
+                <div class="alert-banner">
+                    <i class="fas fa-info-circle text-blue-500"></i>
+                    <p>Your recent login attempt was part of a security simulation. Please complete this training to enhance your awareness.</p>
+                </div>
+                
+                <p id="submitted-email-display" class="text-center text-sm text-gray-600 {{ 'block' if submitted_email else 'hidden' }}">
+                    <span id="submitted-email-value">Activity logged for: <strong>{{ submitted_email }}</strong></span>
+                </p>
+
+                <!-- Step Indicator -->
+                <div class="step-indicator">
+                    <div class="step active" id="step-1">
+                        <div class="step-circle">1</div>
+                        <div class="step-label">Training</div>
+                    </div>
+                    <div class="step" id="step-2">
+                        <div class="step-circle">2</div>
+                        <div class="step-label">Quiz</div>
+                    </div>
+                    <div class="step" id="step-3">
+                        <div class="step-circle">3</div>
+                        <div class="step-label">Completion</div>
+                    </div>
+                </div>
+
+                <!-- 2a. Video Section -->
+                <div id="video-step">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Security Awareness Video</h3>
+                    <p class="text-gray-600 mb-4">Watch this brief video to learn about identifying and avoiding phishing attempts in the workplace.</p>
+                    
+                    <div class="aspect-ratio-box rounded-lg overflow-hidden shadow-md">
+                        <iframe id="training-video" src="https://www.youtube.com/embed/oTf2-7_45xI?rel=0&amp;controls=1&amp;showinfo=0" frameborder="0" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    
+                    <button onclick="nextStep('quiz')" class="btn-primary w-full mt-4">
+                        <i class="fas fa-play-circle mr-2"></i> Continue to Quiz
+                    </button>
+                </div>
+
+                <!-- 2b. Quiz Section -->
+                <div id="quiz-step" class="hidden">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Security Knowledge Assessment</h3>
+                    <p class="text-gray-600 mb-6">Answer the following questions to test your understanding of phishing threats.</p>
+                    
+                    <form id="security-quiz-form" class="space-y-6">
+                        <!-- Question 1 -->
+                        <div class="quiz-question">
+                            <p class="font-semibold text-gray-700 mb-3">1. What is the primary goal of a phishing attack?</p>
+                            <div class="quiz-option" onclick="selectOption(this, 'q1')">
+                                <input type="radio" name="q1" value="a" class="mr-2"> 
+                                <span>To steal credentials or sensitive data</span>
+                            </div>
+                            <div class="quiz-option" onclick="selectOption(this, 'q1')">
+                                <input type="radio" name="q1" value="b" class="mr-2"> 
+                                <span>To advertise new products</span>
+                            </div>
+                            <div class="quiz-option" onclick="selectOption(this, 'q1')">
+                                <input type="radio" name="q1" value="c" class="mr-2"> 
+                                <span>To update software on your computer</span>
+                            </div>
+                        </div>
+
+                        <!-- Question 2 -->
+                        <div class="quiz-question">
+                            <p class="font-semibold text-gray-700 mb-3">2. Which characteristic is a major red flag in a suspicious email?</p>
+                            <div class="quiz-option" onclick="selectOption(this, 'q2')">
+                                <input type="radio" name="q2" value="a" class="mr-2"> 
+                                <span>A generic greeting like "Dear Customer"</span>
+                            </div>
+                            <div class="quiz-option" onclick="selectOption(this, 'q2')">
+                                <input type="radio" name="q2" value="b" class="mr-2"> 
+                                <span>A link to a company's official website</span>
+                            </div>
+                            <div class="quiz-option" onclick="selectOption(this, 'q2')">
+                                <input type="radio" name="q2" value="c" class="mr-2"> 
+                                <span>The company logo</span>
+                            </div>
+                        </div>
+
+                        <!-- Question 3 -->
+                        <div class="quiz-question">
+                            <p class="font-semibold text-gray-700 mb-3">3. What should you do before clicking a link in an unexpected email?</p>
+                            <div class="quiz-option" onclick="selectOption(this, 'q3')">
+                                <input type="radio" name="q3" value="a" class="mr-2"> 
+                                <span>Click it immediately to see where it goes</span>
+                            </div>
+                            <div class="quiz-option" onclick="selectOption(this, 'q3')">
+                                <input type="radio" name="q3" value="b" class="mr-2"> 
+                                <span>Verify the sender and hover over the link to check the URL</span>
+                            </div>
+                            <div class="quiz-option" onclick="selectOption(this, 'q3')">
+                                <input type="radio" name="q3" value="c" class="mr-2"> 
+                                <span>Forward it to all colleagues for their opinion</span>
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="submitQuiz()" class="btn-secondary w-full">
+                            <i class="fas fa-paper-plane mr-2"></i> Submit Assessment
+                        </button>
+                    </form>
+                </div>
+
+                <!-- 2c. Result Section -->
+                <div id="result-step" class="hidden">
+                    <div class="result-card">
+                        <h3 class="text-2xl font-bold mb-3" id="result-title">Assessment Results</h3>
+                        <div class="score-display" id="final-score">0/3</div>
+                        <p class="text-gray-600 mb-4">Your security awareness score</p>
+                        
+                        <div id="result-message" class="p-4 rounded-lg font-medium mb-6"></div>
+
+                        <div class="flex space-x-4">
+                            <button id="re-watch-button" onclick="nextStep('video')" class="btn-outline flex-1 hidden">
+                                <i class="fas fa-redo mr-2"></i> Review Material
+                            </button>
+                            <a href="{{ url_for('home') }}" id="continue-button" class="btn-primary flex-1 hidden">
+                                <i class="fas fa-check-circle mr-2"></i> Complete Training
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="border-t border-gray-200 p-4 text-center text-sm text-gray-500">
+            <p>© 2023 Corporate Security Portal. All rights reserved. | Confidential & Proprietary</p>
+        </div>
+    </div>
+
+    <script>
+        // Set the correct answers
+        const CORRECT_ANSWERS = {
+            q1: 'a', // To steal credentials or sensitive data.
+            q2: 'a', // A generic greeting like "Dear Customer."
+            q3: 'b'  // Verify the sender and hover over the link to check the URL.
+        };
+        const TOTAL_QUESTIONS = 3;
+        const CAMPAIGN_ID = "{{ campaign_id }}";
+        const SUBMITTED_EMAIL = "{{ submitted_email if submitted_email else 'user@example.com' }}"; 
+
+        function selectOption(element, questionName) {
+            // Remove selected class from all options in this question
+            const questionElement = element.closest('.quiz-question');
+            questionElement.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked option
+            element.classList.add('selected');
+            
+            // Check the radio button
+            const radio = element.querySelector('input[type="radio"]');
+            radio.checked = true;
+        }
+
+        function updateStepIndicator(currentStep) {
+            // Reset all steps
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active', 'completed');
+            });
+            
+            if (currentStep === 'video') {
+                document.getElementById('step-1').classList.add('active');
+            } else if (currentStep === 'quiz') {
+                document.getElementById('step-1').classList.add('completed');
+                document.getElementById('step-2').classList.add('active');
+            } else if (currentStep === 'result') {
+                document.getElementById('step-1').classList.add('completed');
+                document.getElementById('step-2').classList.add('completed');
+                document.getElementById('step-3').classList.add('active');
+            }
+        }
+
+        function nextStep(step) {
+            document.getElementById('video-step').classList.add('hidden');
+            document.getElementById('quiz-step').classList.add('hidden');
+            document.getElementById('result-step').classList.add('hidden');
+
+            if (step === 'quiz') {
+                document.getElementById('quiz-step').classList.remove('hidden');
+                updateStepIndicator('quiz');
+            } else if (step === 'video') {
+                // Reset quiz form when re-watching
+                document.getElementById('security-quiz-form').reset();
+                document.querySelectorAll('.quiz-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                
+                document.getElementById('video-step').classList.remove('hidden');
+                document.getElementById('re-watch-button').classList.add('hidden');
+                document.getElementById('continue-button').classList.add('hidden');
+                updateStepIndicator('video');
+                
+                // Restart the video and add autoplay to force re-watch
+                const videoEl = document.getElementById('training-video');
+                const src = videoEl.src.split('?')[0];
+                videoEl.src = src + '?rel=0&autoplay=1&controls=1&showinfo=0'; 
+            }
+        }
+
+        async function logQuizResult(score) {
+            const data = {
+                campaign_id: CAMPAIGN_ID,
+                email: SUBMITTED_EMAIL,
+                score: score,
+                total: TOTAL_QUESTIONS
+            };
+
+            try {
+                const response = await fetch('{{ url_for("api_log_quiz_result") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    console.error("Failed to log quiz results to Backendless.");
+                }
+            } catch (error) {
+                console.error("Network error while logging quiz results:", error);
+            }
+        }
+
+        function submitQuiz() {
+            let score = 0;
+            const form = document.getElementById('security-quiz-form');
+            const resultMessageEl = document.getElementById('result-message');
+            const resultTitleEl = document.getElementById('result-title');
+            
+            // Collect answers and check for completeness
+            const q1Answer = form.elements['q1'].value;
+            const q2Answer = form.elements['q2'].value;
+            const q3Answer = form.elements['q3'].value;
+
+            if (!q1Answer || !q2Answer || !q3Answer) {
+                alert("Please answer all three questions before submitting.");
+                return;
+            }
+
+            // Calculate score
+            if (q1Answer === CORRECT_ANSWERS.q1) score++;
+            if (q2Answer === CORRECT_ANSWERS.q2) score++;
+            if (q3Answer === CORRECT_ANSWERS.q3) score++;
+
+            // Display results
+            document.getElementById('final-score').textContent = `${score}/${TOTAL_QUESTIONS}`;
+            document.getElementById('quiz-step').classList.add('hidden');
+            document.getElementById('result-step').classList.remove('hidden');
+            updateStepIndicator('result');
+            
+            // Store data in Backendless
+            logQuizResult(score);
+
+            // Conditional message logic (Score less than 2 is a failure: 0 or 1)
+            if (score >= 2) {
+                resultTitleEl.textContent = "Assessment Passed";
+                resultMessageEl.innerHTML = `
+                    <div class="bg-green-50 text-green-800 p-4 rounded-lg">
+                        <div class="flex items-center justify-center mb-2">
+                            <i class="fas fa-check-circle text-green-500 text-xl mr-2"></i>
+                            <span class="font-bold">Well done!</span>
+                        </div>
+                        <p>You've demonstrated a good understanding of phishing threats. Your final score is ${score}/${TOTAL_QUESTIONS}.</p>
+                    </div>
+                `;
+                document.getElementById('continue-button').classList.remove('hidden');
+                document.getElementById('re-watch-button').classList.add('hidden');
+            } else {
+                resultTitleEl.textContent = "Assessment Requires Review";
+                resultMessageEl.innerHTML = `
+                    <div class="bg-amber-50 text-amber-800 p-4 rounded-lg">
+                        <div class="flex items-center justify-center mb-2">
+                            <i class="fas fa-exclamation-triangle text-amber-500 text-xl mr-2"></i>
+                            <span class="font-bold">Review Required</span>
+                        </div>
+                        <p>You scored ${score}/${TOTAL_QUESTIONS}. To ensure you are fully aware of the risks, please review the training material and try again.</p>
+                    </div>
+                `;
+                document.getElementById('re-watch-button').classList.remove('hidden');
+                document.getElementById('continue-button').classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

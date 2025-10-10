@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ 'Dashboard' if content_type == 'dashboard' else ('Add Campaign' if content_type == 'add_campaign' else ('Analytics' if content_type == 'analytics' or content_type == 'report' else 'Admin Login')) }} | PhishSim Admin</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+
+    <style>
+        html { font-family: 'Inter', sans-serif; }
+        .required-field {
+            border-left: 4px solid theme('colors.indigo.500');
+            border-radius: theme('borderRadius.lg');
+        }
+        .modal-backdrop {
+            /* Standard modal background with blur effect */
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(2px);
+        }
+        .chart-container {
+            /* Standard styling for chart canvases */
+            padding: 1rem;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+        #qr-preview-container, #qr-display-container {
+            /* Center and border QR code containers */
+            margin: 1rem auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #e2e8f0;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: white;
+        }
+        .chart-container canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Responsive adjustments for navigation */
+        @media (max-width: 768px) {
+            .nav a {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col items-center justify-start min-h-screen p-4">
+
+    <main class="w-full {% if content_type == 'dashboard' or content_type == 'analytics' or content_type == 'report' %}max-w-7xl{% else %}max-w-lg{% endif %}"
+          aria-label="Admin Portal Main Content">
+        
+        <div class="bg-white p-8 rounded-xl shadow-2xl border border-gray-100">
+
+            {% if username %}
+            <header class="text-center mb-6">
+                <h1 class="text-3xl font-extrabold text-gray-900">
+                    {{ 'Admin Dashboard' if content_type == 'dashboard' else ('Add Campaign' if content_type == 'add_campaign' else ('Analytics & Reporting' if content_type == 'analytics' or content_type == 'report' else 'Admin Portal')) }}
+                </h1>
+                <p class="mt-1 text-sm text-gray-600">
+                    Welcome, <span class="font-semibold text-indigo-600">{{ username }}</span>.
+                </p>
+            </header>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-4 space-y-2">
+                        {% for category, message in messages %}
+                            <div class="p-4 rounded-lg shadow-sm text-sm border
+                                {% if category == 'success' %} bg-green-100 border-green-400 text-green-800
+                                {% elif category == 'error' %} bg-red-100 border-red-400 text-red-800
+                                {% else %} bg-yellow-100 border-yellow-400 text-yellow-800 {% endif %}"
+                                role="alert">
+                                <span class="font-medium">{{ category | capitalize }}:</span> {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <nav class="nav flex flex-wrap justify-between p-3 mb-6 bg-indigo-100 rounded-lg shadow-inner space-x-1 sm:space-x-2" aria-label="Main Admin Navigation">
+                <div class="flex flex-wrap space-x-1 sm:space-x-2">
+                    <a href="{{ url_for('admin_dashboard') }}"
+                        class="px-3 py-1 rounded-lg text-sm font-medium transition duration-150
+                        {% if content_type == 'dashboard' %}bg-indigo-600 text-white shadow-md{% else %}text-indigo-700 hover:bg-indigo-200{% endif %}">
+                        Dashboard
+                    </a>
+                    <a href="{{ url_for('add_campaign') }}"
+                        class="px-3 py-1 rounded-lg text-sm font-medium transition duration-150
+                        {% if content_type == 'add_campaign' %}bg-indigo-600 text-white shadow-md{% else %}text-indigo-700 hover:bg-indigo-200{% endif %}">
+                        Add Campaign
+                    </a>
+                    <a href="{{ url_for('analytics_dashboard') }}"
+                        class="px-3 py-1 rounded-lg text-sm font-medium transition duration-150
+                        {% if content_type == 'analytics' %}bg-indigo-600 text-white shadow-md{% else %}text-indigo-700 hover:bg-indigo-200{% endif %}">
+                        Analytics
+                    </a>
+                    <a href="{{ url_for('report_view') }}"
+                        class="px-3 py-1 rounded-lg text-sm font-medium transition duration-150
+                        {% if content_type == 'report' %}bg-indigo-600 text-white shadow-md{% else %}text-indigo-700 hover:bg-indigo-200{% endif %}">
+                        Report
+                    </a>
+                </div>
+                <a href="{{ url_for('logout') }}"
+                    class="px-3 py-1 rounded-lg text-sm font-medium text-red-700 hover:bg-red-100 transition duration-150">
+                    Logout
+                </a>
+            </nav>
+
+            <section class="space-y-8">
+                
+                {% if content_type == 'dashboard' %}
+                <div class="bg-white rounded-lg border border-gray-200 shadow-xl overflow-hidden">
+                    <h2 class="p-6 text-xl font-bold text-gray-800 border-b">Scheduled Campaigns ({{ campaigns | length }})</h2>
+                    
+                    {% if campaigns %}
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <caption class="sr-only">List of all scheduled phishing campaigns</caption>
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for campaign in campaigns %}
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ campaign.name }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ campaign.method | upper }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ campaign.schedule }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                                {% if campaign.status == 'Sent' %}bg-green-100 text-green-800
+                                                {% elif campaign.status == 'Scheduled' or campaign.status == 'Ready' %}bg-yellow-100 text-yellow-800
+                                                {% elif campaign.status == 'Failed' %}bg-red-100 text-red-800
+                                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                                {{ campaign.status }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                            {% if campaign.method == 'qr' and campaign.status == 'Ready' %}
+                                            <button type="button" onclick='showQrModal("{{ campaign.objectId }}")'
+                                                class="text-teal-600 hover:text-teal-900 transition duration-150 text-xs font-bold bg-teal-50 p-1 rounded">
+                                                View QR
+                                            </button>
+                                            {% endif %}
+                                            <button type="button" onclick='showTrackingDetails("{{ campaign.objectId }}", "{{ campaign.name }}")'
+                                                class="text-red-600 hover:text-red-900 transition duration-150 text-xs font-bold bg-red-50 p-1 rounded">
+                                                Track Clicks
+                                            </button>
+                                            <button type="button" onclick='showCampaignDetails({{ campaign | tojson | safe }})' class="text-indigo-600 hover:text-indigo-900 transition duration-150 text-xs font-bold p-1 rounded">
+                                                View
+                                            </button>
+                                            <button type="button" onclick='confirmDelete("{{ campaign.objectId }}", "{{ campaign.name }}")'
+                                                class="text-gray-500 hover:text-gray-900 transition duration-150 text-xs font-bold bg-gray-100 p-1 rounded">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="p-6 text-gray-500 text-sm">No campaigns found. Start by adding a new campaign!</p>
+                    {% endif %}
+                </div>
+
+                {% elif content_type == 'add_campaign' %}
+                <div class="p-6 bg-white rounded-lg border border-indigo-200 shadow-md">
+                    <h2 class="text-xl font-bold text-indigo-700 mb-4">New Campaign Details</h2>
+                    
+                    <form id="campaign-form" class="space-y-6" action="{{ url_for('create_campaign') }}" method="POST">
+                        
+                        <input type="hidden" name="generated-content-subject" id="generated-content-subject">
+                        <input type="hidden" name="generated-content-body" id="generated-content-body">
+
+                        <div class="required-field p-2 rounded-lg">
+                            <label for="campaign-name" class="block text-sm font-semibold text-gray-700">Campaign Name</label>
+                            <input id="campaign-name" name="campaign-name" type="text" required placeholder="e.g., Q4 Product Launch"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" aria-required="true">
+                        </div>
+                        
+                        <div class="required-field p-2 rounded-lg">
+                            <label for="campaign-description" class="block text-sm font-semibold text-gray-700">Description</label>
+                            <textarea id="campaign-description" name="campaign-description" rows="3" required placeholder="Brief summary of the campaign goals and content. (Used by AI for generation)"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" aria-required="true"></textarea>
+                        </div>
+                        
+                        <div class="required-field p-2 rounded-lg border-t border-gray-100">
+                            <label for="method" class="block text-sm font-semibold text-gray-700 mb-2">Delivery Method</label>
+                            <select id="method" name="method" required class="block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" aria-required="true">
+                                <option value="email">Email Marketing (Phishing Trap)</option>
+                                <option value="qr">QR Code Distribution (Phishing Trap)</option>
+                            </select>
+                        </div>
+                        
+                        <div id="recipients-field" class="required-field p-2 rounded-lg border-t border-gray-100">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Recipient Source</label>
+                            <div class="flex space-x-4 mb-3" role="radiogroup" aria-labelledby="recipient_source_label">
+                                <span id="recipient_source_label" class="sr-only">Recipient Source</span>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="recipient_type" value="manual" id="manual-radio" checked
+                                             class="form-radio text-indigo-600 h-4 w-4 focus:ring-indigo-500">
+                                    <span class="ml-2 text-gray-700 text-sm">Manually Enter List</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="recipient_type" value="csv" id="csv-radio"
+                                             class="form-radio text-indigo-600 h-4 w-4 focus:ring-indigo-500">
+                                    <span class="ml-2 text-gray-700 text-sm">Import CSV File (Demo Only)</span>
+                                </label>
+                            </div>
+
+                            <div id="manual-input">
+                                <textarea name="recipients_text" rows="4" placeholder="Enter recipient emails, one per line or comma-separated..."
+                                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                                <p class="mt-1 text-xs text-gray-500">Separated by new lines or commas. **All valid emails will receive a campaign email.**</p>
+                            </div>
+                            
+                            <div id="csv-input" class="hidden">
+                                <input type="file" name="recipients_file" accept=".csv" class="w-full mt-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                <p class="mt-1 text-xs text-gray-500">Note: File content is simulated for this demo.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="required-field p-2 rounded-lg border-t border-gray-100">
+                            <label for="campaign-schedule" class="block text-sm font-semibold text-gray-700">Scheduled Send Time (Instant for Demo)</label>
+                            <input id="campaign-schedule" name="campaign-schedule" type="datetime-local" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" aria-required="true">
+                        </div>
+
+                        <div id="generate-content-container" class="pt-4 border-t border-gray-100">
+                            <button type="button" id="generate-content-btn"
+                                class="w-full py-2 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition duration-150">
+                                Generate Content (Preview)
+                            </button>
+                        </div>
+                        
+                        <div id="preview-area" class="p-4 bg-gray-100 rounded-lg shadow-inner border border-gray-300 hidden" aria-live="polite">
+                            <h3 class="text-md font-bold text-gray-800 mb-2">Content Preview (using PREVIEW Tracking ID)</h3>
+                            <div id="preview-subject" class="p-2 bg-white rounded-md mb-2 text-sm font-semibold"></div>
+                            <div id="preview-body" class="p-2 bg-white rounded-md text-sm whitespace-pre-wrap"></div>
+                            <div id="qr-download-area" class="mt-4 hidden text-center border-t pt-4 border-gray-200">
+                                <p class="text-xs text-gray-600 mb-2 font-semibold">Download this QR code and distribute it physically.</p>
+                                <div id="qr-preview-container" class="mx-auto" style="width: 200px; height: 200px;" aria-label="QR Code Preview"></div>
+
+                                <a id="qr-download-link" href="#" download="phishing_qr.png"
+                                    class="mt-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L10 11.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v7a1 1 0 11-2 0V3a1 1 0 011-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    Download QR Code
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-6 border-t border-gray-100">
+                            <button type="submit" id="schedule-btn" class="w-full py-3 px-4 border border-transparent rounded-lg shadow-lg text-lg font-bold text-white bg-green-600 hover:bg-green-700 transition duration-150 transform hover:scale-[1.01]">
+                                Schedule Campaign (And Send Emails if Applicable)
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                {% elif content_type == 'analytics' %}
+                <div class="bg-white rounded-lg border border-gray-200 shadow-xl p-6 space-y-8">
+                    <h2 class="text-2xl font-bold text-gray-800 border-b pb-2">Analytics Dashboard</h2>
+
+                    <div class="flex flex-wrap gap-4 items-center border-b pb-4">
+                        <div class="flex items-center space-x-2">
+                            <h3 class="font-semibold text-gray-700">Scope:</h3>
+                            <select id="analytics-scope" class="px-4 py-2 border rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500" aria-label="Select Analytics Scope">
+                                <option value="total">Total Campaign Performance</option>
+                                {% for campaign in campaigns %}
+                                    <option value="{{ campaign.objectId }}">{{ campaign.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <h3 class="font-semibold text-gray-700">Period:</h3>
+                            <select id="time-period-scope" class="px-4 py-2 border rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500" aria-label="Select Time Period">
+                                <option value="daily">Daily Report</option>
+                                <option value="weekly">Weekly Report</option>
+                                <option value="monthly">Monthly Report</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="analytics-chart-area">
+                        <p class="text-xl text-center text-gray-500 pt-10">Loading Charts...</p>
+                    </div>
+
+                    <p class="text-sm text-gray-500">Note: Data is calculated from logged phishing attempts. All data is based on unique credential submissions.</p>
+                </div>
+
+                {% elif content_type == 'report' %}
+                <div class="bg-white rounded-lg border border-gray-200 shadow-xl p-6 space-y-6">
+                    <h2 class="text-2xl font-bold text-gray-800 border-b pb-2">Full Security Interaction Report</h2>
+
+                    <div class="flex flex-wrap items-center justify-between space-y-3 sm:space-y-0 sm:space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <label for="campaign-filter" class="font-semibold text-gray-700 text-sm">Filter by Campaign:</label>
+                            <select id="campaign-filter" onchange="filterReportTable()" class="px-3 py-1 border rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm" aria-label="Filter report by campaign">
+                                <option value="all">All Campaigns</option>
+                                {% for campaign in campaigns %}
+                                    <option value="{{ campaign.objectId }}">{{ campaign.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <a href="{{ url_for('export_report', format='csv') }}" class="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition">
+                            Export Combined CSV
+                        </a>
+                    </div>
+                    
+                    {% if combined_report %}
+                    <div class="overflow-x-auto">
+                        <table id="report-table" class="min-w-full divide-y divide-gray-200 border border-gray-100">
+                            <caption class="sr-only">Detailed report of all user security interactions, including phishing attempts and training results.</caption>
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
+                                    <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Campaign Name</th>
+                                    <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                    <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Event Type</th>
+                                    <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status/Result</th>
+                                    <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for record in combined_report %}
+                                <tr class="hover:bg-{{ 'red-50' if record.type == 'Phishing Attempt' else ('green-50' if record.status == 'Pass' else 'yellow-50') }}"
+                                    data-campaign-id="{{ record.campaign_id }}">
+                                    
+                                    <td class="px-4 py-2 whitespace-nowrap text-xs text-gray-500">{{ record.timestamp }}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-gray-700">{{ record.campaign_name }}</td>
+                                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{{ record.email }}</td>
+                                    
+                                    <td class="px-4 py-2 whitespace-nowrap text-xs text-gray-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            {{ 'bg-red-100 text-red-800' if record.type == 'Phishing Attempt' else 'bg-indigo-100 text-indigo-800' }}">
+                                            {{ record.type }}
+                                        </span>
+                                    </td>
+                                    
+                                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {{ record.status }}
+                                    </td>
+                                    
+                                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {% if record.score is not none %}
+                                            {{ record.score }}/{{ record.total }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-lg font-medium text-gray-500">No security interaction records found.</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+            </section>
+
+            {% else %}
+            <div class="text-center">
+                <h1 class="text-3xl font-extrabold text-gray-900">Admin Portal Login</h1>
+                <p class="mt-2 text-sm text-gray-600">Sign in to access your dashboard. (Demo: admin/password123)</p>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mt-6 space-y-2">
+                    {% for category, message in messages %}
+                        <div class="p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg" role="alert"><p class="font-bold">Error:</p><p class="text-sm">{{ message }}</p></div>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form class="mt-8 space-y-6" action="{{ url_for('login') }}" method="POST" aria-label="Admin Login Form">
+                <div class="rounded-md shadow-sm">
+                    <div>
+                        <label for="username" class="sr-only">Username</label>
+                        <input id="username" name="username" type="text" autocomplete="username" required
+                               class="appearance-none rounded-t-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                               placeholder="Username" aria-required="true">
+                    </div>
+                    <div>
+                        <label for="password" class="sr-only">Password</label>
+                        <input id="password" name="password" type="password" autocomplete="current-password" required
+                               class="appearance-none rounded-b-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm mt-3"
+                               placeholder="Password" aria-required="true">
+                    </div>
+                </div>
+                <div>
+                    <button type="submit"
+                             class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
+                        Sign in
+                    </button>
+                </div>
+            </form>
+            {% endif %}
+
+        </div>
+    </main>
+    
+    <div id="campaign-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="campaign-modal-title">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl transform transition-all duration-300">
+            <h2 id="campaign-modal-title" class="text-2xl font-bold text-indigo-700 border-b pb-2 mb-4">Campaign Details</h2>
+            <div id="modal-content" class="space-y-4 text-sm"></div>
+            <div class="mt-6 flex justify-end">
+                <button type="button" onclick="document.getElementById('campaign-modal').classList.add('hidden')"
+                        class="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="tracking-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="tracking-modal-title">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl transform transition-all duration-300">
+            <h2 id="tracking-modal-title" class="text-2xl font-bold text-red-700 border-b pb-2 mb-4">Phishing Click Tracking: <span id="tracking-campaign-name" class="font-medium text-gray-800"></span></h2>
+            <div id="tracking-content" class="space-y-4 text-sm" aria-live="polite"><p class="text-gray-600">Loading click data...</p></div>
+            <div class="mt-6 flex justify-end">
+                <button type="button" onclick="document.getElementById('tracking-modal').classList.add('hidden')"
+                        class="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition">Close Tracker</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="delete-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm transform transition-all duration-300 border border-red-300">
+            <h2 id="delete-modal-title" class="text-xl font-bold text-red-700 border-b pb-2 mb-4">Confirm Deletion</h2>
+            <p class="text-gray-700 mb-4">Are you sure you want to delete the campaign: <strong id="delete-campaign-name"></strong>?</p>
+            <p class="text-sm text-red-500 font-medium">This action cannot be undone and will delete all associated data.</p>
+            <form id="delete-form" method="POST" class="mt-6 flex justify-between space-x-4">
+                <button type="button" onclick="document.getElementById('delete-modal').classList.add('hidden')"
+                        class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition">Cancel</button>
+                <button type="submit"
+                        class="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition">Delete Permanently</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="qr-modal" class="hidden fixed inset-0 z-50 overflow-y-auto modal-backdrop flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="qr-modal-title">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg transform transition-all duration-300">
+            <h2 id="qr-modal-title" class="text-2xl font-bold text-teal-700 border-b pb-2 mb-4">QR Code Viewer</h2>
+            <div class="text-center space-y-4">
+                <p class="text-lg font-semibold text-gray-700">Campaign ID: <span id="qr-campaign-id"></span></p>
+                <div id="qr-display-container" class="mx-auto" style="width: 250px; height: 250px;" aria-label="QR Code Display"></div> 
+                <p class="text-sm text-gray-600 break-all">Link: <span id="qr-display-link" class="font-medium text-indigo-600"></span></p>
+            </div>
+            <div class="mt-6 flex justify-end space-x-4">
+                <a id="qr-modal-download-link" href="#" download="phishing_qr.png"
+                    class="px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition" role="button">Download QR</a>
+                <button type="button" onclick="document.getElementById('qr-modal').classList.add('hidden')"
+                        class="px-4 py-2 bg-gray-300 text-gray-800 font-medium rounded-lg hover:bg-gray-400 transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- 1. Global Data Initialization (From Python/Jinja) ---
+        const ALL_CAMPAIGNS = {% if campaigns %}{{ campaigns | tojson | safe }}{% else %}[]{% endif %};
+        const ALL_ATTEMPTS = {% if all_attempts %}{{ all_attempts | tojson | safe }}{% else %}[]{% endif %};
+        const COMBINED_REPORT = {% if combined_report %}{{ combined_report | tojson | safe }}{% else %}[]{% endif %};
+        const PHISHING_LANDING_URL = "http://127.0.0.1:5000/training-trap";
+        
+        // --- 2. Utility Functions ---
+
+        /** Helper function to get a Data URL from the QRCode library output (canvas or img) */
+        function getQrDataUrl(containerId) {
+            const container = document.getElementById(containerId);
+            const qrElement = container ? (container.querySelector('canvas') || container.querySelector('img')) : null;
+            
+            if (qrElement && qrElement.tagName === 'CANVAS') {
+                return qrElement.toDataURL('image/png');
+            } else if (qrElement && qrElement.tagName === 'IMG') {
+                return qrElement.src;
+            }
+            return null;
+        }
+
+        /** Basic HTML escaping for display purposes */
+        function escapeHtml(unsafe) {
+            if (unsafe === null || unsafe === undefined) return '';
+            return unsafe.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        /** Formats a timestamp into a grouping key (Day, Week, or Month) */
+        function getPeriodFromTimestamp(timestamp, period) {
+            const date = new Date(timestamp);
+            if (period === 'daily') {
+                return date.toISOString().split('T')[0]; // YYYY-MM-DD
+            } else if (period === 'weekly') {
+                const day = date.getDay() || 7; // Convert Sunday 0 to 7
+                date.setDate(date.getDate() - (day - 1));
+                return date.toISOString().split('T')[0] + ' (Week)';
+            } else if (period === 'monthly') {
+                return date.toISOString().substring(0, 7); // YYYY-MM
+            }
+            return 'Other';
+        }
+        
+        function getCampaignName(campaignId) {
+            const campaign = ALL_CAMPAIGNS.find(c => c.objectId === campaignId);
+            return campaign ? campaign.name : `Unknown (${campaignId ? campaignId.substring(0, 4) : 'N/A'}...)`;
+        }
+
+
+        // --- 3. Modal Logic (Details, Tracking, Delete, QR) ---
+        
+        function showCampaignDetails(campaign) {
+            const modal = document.getElementById('campaign-modal');
+            const content = document.getElementById('modal-content');
+            
+            let recipientsText = campaign.recipients ? campaign.recipients.split(/[\n,]/).map(r => r.trim()).filter(r => r.length > 0).map(r => `<li>${escapeHtml(r)}</li>`).join('') : '<li>No recipients listed.</li>';
+            const displayedContent = escapeHtml(campaign.generated_content || '');
+
+            content.innerHTML = `
+                <h3 class="text-lg font-semibold mb-2">${escapeHtml(campaign.name)}</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border p-3 rounded-lg bg-gray-50">
+                    <p><strong>Method:</strong> ${campaign.method.toUpperCase()}</p>
+                    <p><strong>Schedule:</strong> ${campaign.schedule}</p>
+                    <p><strong>Status:</strong> ${campaign.status}</p>
+                    <p><strong>ID:</strong> <span class="text-xs text-gray-500">${campaign.objectId}</span></p>
+                </div>
+                <div class="mt-4"><p class="font-semibold text-gray-700">Description:</p><p class="p-2 border rounded-lg whitespace-pre-wrap">${escapeHtml(campaign.description)}</p></div>
+                <div class="mt-4"><p class="font-semibold text-gray-700">Recipients (Email Only):</p><ul class="p-2 border rounded-lg bg-white overflow-y-auto max-h-20 list-disc list-inside space-y-1">${recipientsText}</ul></div>
+                <div class="mt-4"><p class="font-semibold text-gray-700">AI Generated Content (Tracking URL embedded):</p><p class="p-2 border rounded-lg bg-indigo-50 whitespace-pre-wrap text-sm">${displayedContent}</p></div>
+                <div class="mt-4"><p class="font-semibold text-gray-700">Delivery Log:</p><p class="p-2 border rounded-lg bg-yellow-50 text-xs">${escapeHtml(campaign.delivery_log)}</p></div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        async function showTrackingDetails(campaignId, campaignName) {
+            const modal = document.getElementById('tracking-modal');
+            const nameEl = document.getElementById('tracking-campaign-name');
+            const contentEl = document.getElementById('tracking-content');
+
+            nameEl.textContent = campaignName;
+            contentEl.innerHTML = '<p class="text-gray-600">Loading click data... <span class="animate-pulse">...</span></p>';
+            modal.classList.remove('hidden');
+
+            try {
+                // In a real application, this would fetch data from a secure API endpoint
+                const response = await fetch(`/api/phishing-attempts/${campaignId}`);
+                const attempts = await response.json();
+
+                let html = '';
+                if (response.ok && attempts.length > 0) {
+                    const uniqueEmails = new Set(attempts.map(a => a.email)).size;
+                    html = `
+                        <p class="text-lg font-bold text-red-600">Total Phished Accounts: ${uniqueEmails}</p>
+                        <div class="overflow-x-auto border rounded-lg shadow-inner mt-2">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-red-50">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Email (Phished)</th>
+                                        <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">Time</th>
+                                        <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-600 uppercase">IP Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                    `;
+                    attempts.forEach(attempt => {
+                        const time = attempt.timestamp ? attempt.timestamp.split(' ')[1] : 'N/A';
+                        html += `
+                            <tr>
+                                <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-red-800">${escapeHtml(attempt.email)}</td>
+                                <td class="px-4 py-2 whitespace-nowrap text-xs text-gray-500">${time}</td>
+                                <td class="px-4 py-2 whitespace-nowrap text-xs text-gray-500">${escapeHtml(attempt.ip_address)}</td>
+                            </tr>
+                        `;
+                    });
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                } else if (response.ok) {
+                    html = '<p class="text-lg font-medium text-green-600">✅ No phishing clicks recorded for this campaign yet.</p>';
+                } else {
+                    html = '<p class="text-lg font-medium text-red-600">Error: Failed to retrieve tracking data. Check Backendless table name/permissions.</p>';
+                }
+
+                contentEl.innerHTML = html;
+
+            } catch (error) {
+                console.error('Tracking fetch error:', error);
+                contentEl.innerHTML = '<p class="text-lg font-medium text-red-600">Error: Network issue or API configuration problem.</p>';
+            }
+        }
+
+        function confirmDelete(campaignId, campaignName) {
+            document.getElementById('delete-campaign-name').textContent = campaignName;
+            document.getElementById('delete-form').action = `{{ url_for('delete_campaign', campaign_id='PLACEHOLDER') }}`.replace('PLACEHOLDER', campaignId);
+            document.getElementById('delete-modal').classList.remove('hidden');
+        }
+
+        function showQrModal(campaignId) {
+            const modal = document.getElementById('qr-modal');
+            const qrContainer = document.getElementById('qr-display-container');
+            const qrLinkText = document.getElementById('qr-display-link');
+            const qrCampaignId = document.getElementById('qr-campaign-id');
+            const qrDownloadLink = document.getElementById('qr-modal-download-link');
+
+            // Reconstruct the link based on the standard pattern
+            const trackingLink = `${PHISHING_LANDING_URL}?cid=${campaignId}`;
+
+            qrContainer.innerHTML = ''; // Clear previous QR code
+            qrCampaignId.textContent = campaignId;
+            qrLinkText.textContent = trackingLink;
+            
+            // Generate QR code
+            new QRCode(qrContainer, {
+                text: trackingLink,
+                width: 250,
+                height: 250,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+            
+            // Set download link after rendering
+            setTimeout(() => {
+                const dataUrl = getQrDataUrl('qr-display-container');
+                if (dataUrl) {
+                    qrDownloadLink.href = dataUrl;
+                } else {
+                    console.error("Could not generate data URL for download.");
+                }
+            }, 100);
+
+            modal.classList.remove('hidden');
+        }
+        
+        
+        // --- 4. Analytics Logic (Chart.js Integration) ---
+        let allCharts = [];
+
+        function generateReportData(scopeId, timePeriod) {
+            let filteredAttempts;
+            let campaignRecipients = 0;
+            let campaignName = "Total Campaigns";
+            
+            if (scopeId === 'total') {
+                filteredAttempts = ALL_ATTEMPTS;
+                // Sum up recipients from all 'Sent' email campaigns
+                campaignRecipients = ALL_CAMPAIGNS
+                    .filter(c => c.status === 'Sent' && c.method === 'email' && c.recipients)
+                    .reduce((sum, c) => sum + (c.recipients.split(/[\n,]/).filter(r => r.trim()).length), 0);
+                // Ensure recipients is at least the number of attempts if actual count is low/zero for better chart look
+                campaignRecipients = Math.max(campaignRecipients, new Set(filteredAttempts.map(a => a.email)).size || 10);
+            } else {
+                const currentCampaign = ALL_CAMPAIGNS.find(c => c.objectId === scopeId);
+                campaignName = currentCampaign ? currentCampaign.name : "Unknown Campaign";
+                filteredAttempts = ALL_ATTEMPTS.filter(a => a.campaign_id === scopeId);
+                
+                if (currentCampaign && currentCampaign.recipients) {
+                    campaignRecipients = currentCampaign.recipients.split(/[\n,]/).filter(r => r.trim()).length;
+                }
+                campaignRecipients = Math.max(campaignRecipients, new Set(filteredAttempts.map(a => a.email)).size || 10);
+            }
+            
+            const uniquePhishedEmails = new Set(filteredAttempts.map(a => a.email)).size;
+            
+            const timeData = {};
+            const campaignBreakdown = {};
+            
+            filteredAttempts.forEach(attempt => {
+                const periodKey = getPeriodFromTimestamp(attempt.timestamp, timePeriod);
+                timeData[periodKey] = (timeData[periodKey] || 0) + 1;
+                
+                // Campaign Breakdown uses the campaign ID in the attempt for total/all scope
+                const name = getCampaignName(attempt.campaign_id);
+                campaignBreakdown[name] = (campaignBreakdown[name] || 0) + 1;
+            });
+            
+            const sortedTimeLabels = Object.keys(timeData).sort();
+            const sortedTimeValues = sortedTimeLabels.map(label => timeData[label]);
+            
+            return {
+                campaignName,
+                uniquePhishedEmails,
+                campaignRecipients,
+                timeSeries: { labels: sortedTimeLabels, values: sortedTimeValues, period: timePeriod },
+                campaignBreakdown: { labels: Object.keys(campaignBreakdown), values: Object.values(campaignBreakdown) }
+            };
+        }
+
+        function renderAnalyticsCharts() {
+            // Destroy previous charts to avoid canvas overlap
+            allCharts.forEach(chart => chart.destroy());
+            allCharts = [];
+            
+            const scopeId = document.getElementById('analytics-scope').value;
+            const timePeriod = document.getElementById('time-period-scope').value;
+            const chartArea = document.getElementById('analytics-chart-area');
+
+            const report = generateReportData(scopeId, timePeriod);
+            
+            if (report.uniquePhishedEmails === 0 && report.campaignRecipients === 0) {
+                chartArea.innerHTML = '<h3 class="text-xl text-center text-gray-500 pt-10">No attempts or recipient data found to generate charts for this scope.</h3>';
+                return;
+            }
+
+            // Structure for the charts
+            chartArea.innerHTML = `
+                <h3 class="text-xl font-bold text-gray-800 mb-4">${report.campaignName} - Security Analytics</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="chart-container md:col-span-1"><canvas id="clickRateChart" role="img" aria-label="Phishing Attempt Success Rate"></canvas></div>
+                    <div class="chart-container md:col-span-2"><canvas id="timeSeriesChart" role="img" aria-label="Phishing Attempts Over Time"></canvas></div>
+                </div>
+                ${scopeId === 'total' ? `
+                <div class="mt-6">
+                    <div class="chart-container"><canvas id="campaignBreakdownChart" role="img" aria-label="Phishing Attempts Breakdown by Campaign"></canvas></div>
+                </div>` : ''}
+            `;
+            
+            // 1. Click Rate Chart (Pie)
+            const nonPhished = Math.max(0, report.campaignRecipients - report.uniquePhishedEmails);
+            const clickRateChart = new Chart(document.getElementById('clickRateChart'), {
+                type: 'pie',
+                data: {
+                    labels: ['Successful Phishing (Submitted Credentials)', 'Emails Sent (No Credential Attempt/Non-Phished)'],
+                    datasets: [{
+                        data: [report.uniquePhishedEmails, nonPhished],
+                        backgroundColor: ['rgb(220, 38, 38, 0.8)', 'rgb(56, 189, 248, 0.8)'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { 
+                        legend: { position: 'bottom' }, 
+                        title: { display: true, text: 'Phishing Attempt Success Rate' } 
+                    }
+                }
+            });
+            allCharts.push(clickRateChart);
+            
+            // 2. Time Series Chart (Bar)
+            const timeSeriesChart = new Chart(document.getElementById('timeSeriesChart'), {
+                type: 'bar',
+                data: {
+                    labels: report.timeSeries.labels,
+                    datasets: [{
+                        label: `Phishing Attempts (${report.timeSeries.period}ly)`,
+                        data: report.timeSeries.values,
+                        backgroundColor: 'rgba(79, 70, 229, 0.7)',
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { 
+                        title: { display: true, text: `Phishing Attempts Over Time (${report.timeSeries.period} View)` } 
+                    },
+                    scales: { 
+                        y: { beginAtZero: true, title: { display: true, text: 'Number of Attempts' } },
+                        x: { title: { display: true, text: report.timeSeries.period === 'daily' ? 'Day' : (report.timeSeries.period === 'weekly' ? 'Week Start Date' : 'Month') } }
+                    }
+                }
+            });
+            allCharts.push(timeSeriesChart);
+
+            // 3. Campaign Breakdown Chart (Doughnut) - Only for 'total' scope
+            if (scopeId === 'total' && report.campaignBreakdown.labels.length > 0) {
+                const campaignBreakdownChart = new Chart(document.getElementById('campaignBreakdownChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: report.campaignBreakdown.labels,
+                        datasets: [{
+                            label: 'Attempts by Campaign',
+                            data: report.campaignBreakdown.values,
+                            backgroundColor: ['#4f46e5', '#f97316', '#10b981', '#ef4444', '#facc15', '#a855f7'], // Tailwind-inspired colors
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { 
+                            legend: { position: 'right' }, 
+                            title: { display: true, text: 'Phishing Attempts Breakdown by Campaign' } 
+                        }
+                    }
+                });
+                allCharts.push(campaignBreakdownChart);
+            }
+        }
+
+        // --- 5. Report Filtering Logic ---
+        function filterReportTable() {
+            const filterId = document.getElementById('campaign-filter').value;
+            const table = document.getElementById('report-table');
+            if (!table) return; 
+
+            const rows = table.querySelectorAll('tbody tr');
+
+            rows.forEach(row => {
+                const campaignId = row.getAttribute('data-campaign-id');
+                if (filterId === 'all' || campaignId === filterId) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        // --- 6. Campaign Form Logic ---
+        function toggleRecipientInput() {
+            const method = document.getElementById('method').value;
+            const recipientsField = document.getElementById('recipients-field');
+            const manualInput = document.getElementById('manual-input');
+            const csvInput = document.getElementById('csv-input');
+
+            // Recipients are only relevant for Email method
+            if (method === 'email') {
+                recipientsField.classList.remove('hidden');
+                if (document.getElementById('manual-radio').checked) {
+                    manualInput.classList.remove('hidden');
+                    csvInput.classList.add('hidden');
+                } else {
+                    manualInput.classList.add('hidden');
+                    csvInput.classList.remove('hidden');
+                }
+            } else {
+                recipientsField.classList.add('hidden');
+            }
+        }
+
+        function toggleGenerateButton() {
+            const method = document.getElementById('method').value;
+            const container = document.getElementById('generate-content-container');
+            const generateBtn = document.getElementById('generate-content-btn');
+
+            // Reset preview area when method changes
+            document.getElementById('preview-area').classList.add('hidden');
+            document.getElementById('qr-download-area').classList.add('hidden');
+            document.getElementById('generated-content-subject').value = '';
+            document.getElementById('generated-content-body').value = '';
+
+            container.classList.remove('hidden');
+            if (method === 'email') {
+                generateBtn.textContent = 'Generate Content (Preview)';
+            } else if (method === 'qr') {
+                generateBtn.textContent = 'Generate QR Link (Preview)';
+            }
+        }
+
+        async function generateContent() {
+            const campaignName = document.getElementById('campaign-name').value;
+            const description = document.getElementById('campaign-description').value;
+            const method = document.getElementById('method').value;
+            const previewArea = document.getElementById('preview-area');
+            const subjectEl = document.getElementById('preview-subject');
+            const bodyEl = document.getElementById('preview-body');
+            const generateBtn = document.getElementById('generate-content-btn');
+            const qrDownloadArea = document.getElementById('qr-download-area');
+            const qrContainer = document.getElementById('qr-preview-container');
+            const qrDownloadLink = document.getElementById('qr-download-link');
+
+
+            if (!campaignName || !description || !method) {
+                alert("Please fill in the Campaign Name and Description before generating content.");
+                return;
+            }
+
+            generateBtn.disabled = true;
+            generateBtn.textContent = (method === 'qr' ? 'Generating QR Link...' : 'Generating Content...');
+            previewArea.classList.add('hidden');
+            qrDownloadArea.classList.add('hidden');
+
+            try {
+                // Fetch call to the backend AI generation API
+                const response = await fetch('/api/generate-content', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: campaignName, description, method })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    previewArea.classList.remove('hidden');
+                    document.getElementById('generated-content-subject').value = result.subject || '';
+                    document.getElementById('generated-content-body').value = result.body || '';
+
+                    if (method === 'email') {
+                        // Email Preview
+                        subjectEl.innerHTML = `<strong>Subject:</strong> ${escapeHtml(result.subject || 'N/A')}`;
+                        // Use <pre> for whitespace-pre-wrap effect
+                        bodyEl.innerHTML = `<strong>Body:</strong> <pre class="whitespace-pre-wrap">${escapeHtml(result.body)}</pre>`;
+                        
+                        qrDownloadArea.classList.add('hidden');
+
+                    } else if (method === 'qr') {
+                        // QR Code Preview
+                        const trackingUrl = result.body; // API returns the link in the 'body' field
+                        subjectEl.innerHTML = `<strong>Tracking Link:</strong> <span class="text-indigo-600 break-all">${escapeHtml(trackingUrl)}</span>`;
+                        bodyEl.innerHTML = `<strong>Instructions:</strong> Distribute the downloaded QR image. Users scanning it will be directed to the tracking link above.`;
+                        
+                        // Client-Side QR Generation
+                        qrContainer.innerHTML = ''; // Clear previous QR
+                        new QRCode(qrContainer, {
+                            text: trackingUrl,
+                            width: 200,
+                            height: 200,
+                            colorDark : "#000000",
+                            colorLight : "#ffffff",
+                            correctLevel : QRCode.CorrectLevel.H
+                        });
+                        
+                        // Set download link after rendering
+                        setTimeout(() => {
+                            const dataUrl = getQrDataUrl('qr-preview-container');
+                            if (dataUrl) {
+                                qrDownloadLink.href = dataUrl;
+                            }
+                        }, 100);
+                        
+                        qrDownloadArea.classList.remove('hidden');
+                    }
+
+                } else {
+                    alert(`Error generating content: ${result.error || 'Unknown Error'}`);
+                }
+            } catch (error) {
+                console.error('Content generation network error:', error);
+                alert('A network error occurred while contacting the AI service.');
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = (method === 'qr' ? 'Generate QR Link (Preview)' : 'Generate Content (Preview)');
+            }
+        }
+        
+        // --- 7. Event Listeners and Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Analytics and Report Initialization
+            if (document.getElementById('analytics-scope')) {
+                document.getElementById('analytics-scope').addEventListener('change', renderAnalyticsCharts);
+                document.getElementById('time-period-scope').addEventListener('change', renderAnalyticsCharts);
+                renderAnalyticsCharts();
+            }
+            if (document.getElementById('report-table')) {
+                filterReportTable(); 
+            }
+            
+            // Campaign Creation Form Event Handlers
+            const form = document.getElementById('campaign-form');
+            if (form) {
+                const methodSelect = document.getElementById('method');
+                const manualRadio = document.getElementById('manual-radio');
+                const csvRadio = document.getElementById('csv-radio');
+                const generateBtn = document.getElementById('generate-content-btn');
+
+                if (methodSelect && manualRadio && csvRadio && generateBtn) {
+                    methodSelect.addEventListener('change', () => {
+                        toggleRecipientInput();
+                        toggleGenerateButton();
+                    });
+                    manualRadio.addEventListener('change', toggleRecipientInput);
+                    csvRadio.addEventListener('change', toggleRecipientInput);
+                    generateBtn.addEventListener('click', generateContent);
+                    
+                    // Initial run for correct state
+                    toggleRecipientInput();
+                    toggleGenerateButton();
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>
