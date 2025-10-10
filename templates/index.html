@@ -455,17 +455,19 @@
 
                 <!-- 2a. Video Section -->
                 <div id="video-step">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4">Security Awareness Video</h3>
-                    <p class="text-gray-600 mb-4">Watch this brief video to learn about identifying and avoiding phishing attempts in the workplace.</p>
-                    
-                    <div class="aspect-ratio-box rounded-lg overflow-hidden shadow-md">
-                        <iframe id="training-video" src="https://www.youtube.com/embed/oTf2-7_45xI?rel=0&amp;controls=1&amp;showinfo=0" frameborder="0" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                    </div>
-                    
-                    <button onclick="nextStep('quiz')" class="btn-primary w-full mt-4">
-                        <i class="fas fa-play-circle mr-2"></i> Continue to Quiz
-                    </button>
-                </div>
+  <h3 class="text-xl font-bold text-gray-800 mb-3 border-b pb-2">
+    Step 1: Watch Phishing Awareness Video
+  </h3>
+  <div class="aspect-ratio-box rounded-lg overflow-hidden border-4 border-indigo-300 shadow-xl">
+    <iframe
+      id="training-video"
+      src="https://www.youtube.com/embed/JlQovysQBn0?rel=0&controls=1&showinfo=0"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+  </div>
+</div>
 
                 <!-- 2b. Quiz Section -->
                 <div id="quiz-step" class="hidden">
@@ -713,4 +715,5 @@
         }
     </script>
 </body>
+
 </html>
