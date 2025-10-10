@@ -35,7 +35,7 @@ EMAIL_USER = "girivennapusa8@gmail.com"
 EMAIL_PASS = "wzrn qcno juwf jgqy".replace(" ", "")
 
 # --- PHISHING SIMULATION CONFIG ---
-PHISHING_LANDING_URL = "http://127.0.0.1:5000/training-trap" # Changed to redirect to training route
+PHISHING_LANDING_URL = "https://ai-generated-phishing-simulation-for.onrender.com/training-trap" # Changed to redirect to training route
 
 
 # Flask initialization
@@ -53,7 +53,7 @@ def generate_content_with_gemini(campaign_name, description, method, campaign_id
     """Generates safe, professional campaign content using the Gemini API."""
     
     # Use 'training-trap' route for tracking so training page is displayed after click
-    tracking_url = f"http://127.0.0.1:5000/training-trap?cid={campaign_id_for_tracking}"
+    tracking_url = f"https://ai-generated-phishing-simulation-for.onrender.com/training-trap?cid={campaign_id_for_tracking}"
 
     if method == 'email':
         system_prompt = f"You are a professional marketing copywriter. Write the shortest possible, yet compelling, email body for a product announcement or newsletter. It should be based on a single, powerful sentence (max 150 characters total). Include a clear call-to-action link, using the placeholder HTML '<a href=\"{tracking_url}\">Click Here Now</a>' at the end, followed by a professional signature."
@@ -572,9 +572,9 @@ def create_campaign():
         else:
              # Content was pre-generated. Now replace the PREVIEW tracking ID with the real one.
              # Note: The tracking URL is now set to /training-trap instead of /index
-             final_body = final_body.replace("http://127.0.0.1:5000/training-trap?cid=PREVIEW", f"http://127.0.0.1:5000/training-trap?cid={campaign_id}")
+             final_body = final_body.replace("https://ai-generated-phishing-simulation-for.onrender.com/training-trap?cid=PREVIEW", f"https://ai-generated-phishing-simulation-for.onrender.com/training-trap?cid={campaign_id}")
 
-        tracking_link = f"http://127.0.0.1:5000/training-trap?cid={campaign_id}"
+        tracking_link = f"https://ai-generated-phishing-simulation-for.onrender.com/training-trap?cid={campaign_id}"
         
         # 4. Handle delivery (Email: send to ALL recipients)
         delivery_status = "Not applicable (QR)"
@@ -632,5 +632,6 @@ if __name__ == '__main__':
     # Do NOT use debug=True in production; set debug via environment if needed
     debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'
     app.run(host='0.0.0.0', port=port, debug=debug_mode)
+
 
 
